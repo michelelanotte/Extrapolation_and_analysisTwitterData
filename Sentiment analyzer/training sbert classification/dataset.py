@@ -1,0 +1,36 @@
+import torch
+import numpy as np
+from transformers import BertTokenizer, AutoTokenizer
+
+#tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", use_fast=False)
+
+class Dataset(torch.utils.data.Dataset):
+
+    def __init__(self, df):
+
+        self.labels = [label for label in df['target']]
+        self.texts = [tokenizer(text, 
+                               padding='max_length', max_length = 128, truncation=True,
+                                return_tensors="pt") for text in df['text']]
+
+    def classes(self):
+        return self.labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def get_batch_labels(self, idx):
+        # Fetch a batch of labels
+        return np.array(self.labels[idx])
+
+    def get_batch_texts(self, idx):
+        # Fetch a batch of inputs
+        return self.texts[idx]
+
+    def __getitem__(self, idx):
+
+        batch_texts = self.get_batch_texts(idx)
+        batch_y = self.get_batch_labels(idx)
+
+        return batch_texts, batch_y
